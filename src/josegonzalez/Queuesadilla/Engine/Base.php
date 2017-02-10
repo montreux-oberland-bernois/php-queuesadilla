@@ -47,7 +47,7 @@ abstract class Base implements EngineInterface
 
     public function connection()
     {
-        if ($this->connection === null) {
+        if ($this->connection === null || $this->connection->getAttribute(PDO::ATTR_SERVER_INFO) === null) {
             $this->connect();
         }
         return $this->connection;
