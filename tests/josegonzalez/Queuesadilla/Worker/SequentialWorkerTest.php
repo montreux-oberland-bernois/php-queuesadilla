@@ -6,7 +6,7 @@ use josegonzalez\Queuesadilla\Engine\NullEngine;
 use josegonzalez\Queuesadilla\Job\Base as BaseJob;
 use josegonzalez\Queuesadilla\TestCase;
 use josegonzalez\Queuesadilla\Worker\SequentialWorker;
-use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 function fail_method()
 {
@@ -51,7 +51,7 @@ class MyJob
 
 class SequentialWorkerTest extends TestCase
 {
-    public function setUp()
+    public function setUp() : void
     {
         $this->Engine = new NullEngine;
         $this->Worker = new SequentialWorker($this->Engine);
@@ -70,7 +70,7 @@ class SequentialWorkerTest extends TestCase
         $this->Job = new BaseJob($this->Item, $this->Engine);
     }
 
-    public function tearDown()
+    public function tearDown() : void
     {
         unset($this->Engine);
         unset($this->Worker);
@@ -121,7 +121,7 @@ class SequentialWorkerTest extends TestCase
         $this->assertTrue($Worker->work());
         $this->assertEquals([
             'seen' => 5,
-            'empty' =>1,
+            'empty' => 1,
             'exception' => 1,
             'invalid' => 1,
             'success' => 1,
@@ -185,5 +185,107 @@ class SequentialWorkerTest extends TestCase
     public function testDisconnect()
     {
         $this->assertNull($this->protectedMethodCall($this->Worker, 'disconnect'));
+    }
+
+    /**
+     * @covers josegonzalez\Queuesadilla\Worker\SequentialWorker::signalHandler
+     */
+    public function testSignalHandler()
+    {
+        $this->assertEquals(true, $this->Worker->signalHandler());
+        $this->assertEquals(true, $this->Worker->signalHandler(SIGQUIT));
+        $this->assertEquals(true, $this->Worker->signalHandler(SIGTERM));
+        $this->assertEquals(true, $this->Worker->signalHandler(SIGINT));
+        $this->assertEquals(true, $this->Worker->signalHandler(SIGUSR1));
+    }
+
+    /**
+     * @covers josegonzalez\Queuesadilla\Worker\SequentialWorker::shutdownHandler
+     */
+    public function testShutdownHandler()
+    {
+        $this->assertEquals(true, $this->Worker->shutdownHandler());
+        $this->assertEquals(true, $this->Worker->shutdownHandler(SIGQUIT));
+        $this->assertEquals(true, $this->Worker->shutdownHandler(SIGTERM));
+        $this->assertEquals(true, $this->Worker->shutdownHandler(SIGINT));
+        $this->assertEquals(true, $this->Worker->shutdownHandler(SIGUSR1));
+    }
+
+    /**
+     * tests Worker.job.empty logs to debug
+     *
+     * @return void
+     */
+    public function testJobEmptyEvent()
+    {
+        $Logger = $this->getMockBuilder(NullLogger::class)
+            ->setMethods(['debug'])
+            ->getMock();
+        $Logger
+            ->expects($this->at(0))
+            ->method('debug')
+            ->with('No job!');
+
+        $Engine = $this->getMockBuilder(NullEngine::class)
+                ->setMethods(['pop'])
+                ->getMock();
+        $Engine->expects($this->at(0))
+                ->method('pop')
+                ->will($this->returnValue(false));
+
+        $Worker = new SequentialWorker($Engine, $Logger, ['maxIterations' => 1]);
+        $this->assertTrue($Worker->work());
+    }
+
+    /**
+     * tests Worker.job.exception logs to alert
+     *
+     * @return void
+     */
+    public function testJobExceptionEvent()
+    {
+        $Logger = $this->getMockBuilder(NullLogger::class)
+            ->setMethods(['alert'])
+            ->getMock();
+        $Logger
+            ->expects($this->at(0))
+            ->method('alert')
+            ->with('Exception: "Exception"');
+
+        $Engine = $this->getMockBuilder(NullEngine::class)
+                ->setMethods(['pop'])
+                ->getMock();
+        $Engine->expects($this->at(0))
+                ->method('pop')
+                ->will($this->returnValue($this->ItemException));
+
+        $Worker = new SequentialWorker($Engine, $Logger, ['maxIterations' => 1]);
+        $this->assertTrue($Worker->work());
+    }
+
+    /**
+     * tests Worker.job.success logs to debug
+     *
+     * @return void
+     */
+    public function testJobSuccessEvent()
+    {
+        $Logger = $this->getMockBuilder(NullLogger::class)
+            ->setMethods(['debug'])
+            ->getMock();
+        $Logger
+            ->expects($this->at(0))
+            ->method('debug')
+            ->with('Success. Acknowledging job on queue.');
+
+        $Engine = $this->getMockBuilder(NullEngine::class)
+                ->setMethods(['pop'])
+                ->getMock();
+        $Engine->expects($this->at(0))
+                ->method('pop')
+                ->will($this->returnValue($this->Item));
+
+        $Worker = new SequentialWorker($Engine, $Logger, ['maxIterations' => 1]);
+        $this->assertTrue($Worker->work());
     }
 }

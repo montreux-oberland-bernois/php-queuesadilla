@@ -7,12 +7,12 @@ use josegonzalez\Queuesadilla\Worker\Listener\StatsListener;
 
 class StatsListenerTest extends TestCase
 {
-    public function setUp()
+    public function setUp() : void
     {
         $this->StatsListener = new StatsListener;
     }
 
-    public function tearDown()
+    public function tearDown() : void
     {
         unset($this->StatsListener);
     }
@@ -38,6 +38,7 @@ class StatsListenerTest extends TestCase
             'Worker.job.seen' => 'jobSeen',
             'Worker.job.empty' => 'jobEmpty',
             'Worker.job.invalid' => 'jobInvalid',
+            'Worker.job.start' => 'jobStart',
             'Worker.job.exception' => 'jobException',
             'Worker.job.success' => 'jobSuccess',
             'Worker.job.failure' => 'jobFailure',

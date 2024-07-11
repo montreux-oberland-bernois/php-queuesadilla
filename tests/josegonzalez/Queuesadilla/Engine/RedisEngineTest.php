@@ -10,7 +10,7 @@ use RedisException;
 
 class RedisEngineTest extends TestCase
 {
-    public function setUp()
+    public function setUp() : void
     {
         if (!class_exists('Redis')) {
             $this->markTestSkipped('Redis extension is not installed or configured properly.');
@@ -25,7 +25,7 @@ class RedisEngineTest extends TestCase
         $this->clearEngine();
     }
 
-    public function tearDown()
+    public function tearDown() : void
     {
         $this->clearEngine();
         unset($this->Engine);
@@ -187,10 +187,12 @@ class RedisEngineTest extends TestCase
 
         $this->assertFalse($this->Engine->release(null, 'default'));
 
-        $this->assertEquals(1, $this->Engine->release($this->Fixtures->default['second'], 'default'));
-        $this->assertEquals($this->Fixtures->default['second'], $this->Engine->pop('default'));
-    }
+        $this->assertEquals(false, $this->Engine->release($this->Fixtures->default['second'], 'default'));
+        $this->assertEquals(null, $this->Engine->pop('default'));
 
+        $this->assertEquals(1, $this->Engine->release($this->Fixtures->default['fifth'], 'default'));
+        $this->assertEquals($this->Fixtures->default['fifth'], $this->Engine->pop('default'));
+    }
     /**
      * @covers josegonzalez\Queuesadilla\Engine\RedisEngine::queues
      * @covers josegonzalez\Queuesadilla\Engine\RedisEngine::requireQueue

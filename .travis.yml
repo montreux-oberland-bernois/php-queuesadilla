@@ -1,17 +1,14 @@
 language: php
 
 services:
-  # - memcached
-  # - mongodb
   - mysql
   - postgres
   # - rabbitmq
   - redis-server
 
 php:
-  - 5.5
-  - 5.6
-  - 7
+  - 7.2
+  - 7.3
 
 env:
   global:
@@ -27,7 +24,6 @@ before_script:
   - sudo apt-get update
   # beanstalkd
   - sudo apt-get install -qq --force-yes beanstalkd
-  - sudo beanstalkd -d -l 127.0.0.1 -p 11300
 
   # mysql
   - mysql -e 'CREATE DATABASE database_name;'
@@ -38,19 +34,15 @@ before_script:
   - psql -d database_name -f config/schema-pgsql.sql -U postgres;
 
   # extensions
-  - echo "extension = amqp.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "extension = memcache.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
   - composer self-update
   - composer install
 
 script:
   - vendor/bin/phpcs --standard=psr2 src/
-  - phpunit
+  - vendor/bin/phpunit
   - vendor/bin/phpmd src/ text cleancode,codesize,controversial,design,naming,unusedcode
 
 after_success:
-  - php vendor/bin/coveralls -v
+  - php vendor/bin/php-coveralls -v

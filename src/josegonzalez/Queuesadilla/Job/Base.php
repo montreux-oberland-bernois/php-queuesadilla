@@ -20,6 +20,7 @@ class Base implements JsonSerializable
     {
         $this->engine = $engine;
         $this->item = $item;
+
         return $this;
     }
 
@@ -73,6 +74,7 @@ class Base implements JsonSerializable
         if (isset($this->item['options']['attempts_delay'])) {
             $this->item['delay'] = $this->item['options']['attempts_delay'];
         }
+
         return $this->engine->release($this->item);
     }
 
@@ -81,7 +83,7 @@ class Base implements JsonSerializable
         return json_encode($this);
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->item;
     }

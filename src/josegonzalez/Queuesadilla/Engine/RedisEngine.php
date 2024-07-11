@@ -136,6 +136,10 @@ class RedisEngine extends Base
 
         $queue = $this->setting($options, 'queue');
         $this->requireQueue($options);
+	
+        if (isset($item['attempts']) && $item['attempts'] === 0) {
+            return $this->reject($item);
+        }
 
         return $this->connection()->rpush('queue:' . $queue, json_encode($item));
     }
@@ -147,6 +151,7 @@ class RedisEngine extends Base
         if (!empty($exists[0])) {
             return $exists[0];
         }
+
         return $this->connection()->script('load', $script);
     }
 
@@ -196,6 +201,7 @@ redis.pcall('del', requeueQueue)
 redis.pcall('del', tempQueue)
 return deleted
 EOF;
+
         return trim($script);
     }
 
