@@ -8,6 +8,8 @@ class Queue
 {
     use EventManagerTrait;
 
+    private $engine;
+
     public function __construct($engine)
     {
         $this->engine = $engine;
